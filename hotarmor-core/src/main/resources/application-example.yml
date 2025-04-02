@@ -1,0 +1,99 @@
+# HotArmor 配置示例
+
+spring:
+  # Redis 配置
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 0
+
+# Redisson 配置
+redisson:
+  config: |
+    singleServerConfig:
+      address: "redis://localhost:6379"
+
+# RocketMQ 配置
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: hotarmor-producer
+
+# HotArmor 配置
+hotarmor:
+  # 是否启用（默认 true）
+  enabled: true
+
+  # 延迟双删 Topic
+  delayed-delete-topic: hotarmor-delayed-delete
+
+  # 广播频道
+  broadcast-channel: hotarmor:invalidate
+
+  # 规则配置
+  rules:
+    # 示例规则：用户详情
+    - resource: user:detail
+      # L1 本地缓存配置
+      l1Config:
+        enabled: true
+        maximumSize: 10000
+        expireAfterWrite: 60
+        timeUnit: SECONDS
+
+      # L2 噪音过滤器配置
+      l2Config:
+        enabled: true
+        windowSeconds: 10
+        threshold: 5
+
+      # L3 热点探测器配置
+      l3Config:
+        enabled: true
+        qpsThreshold: 100.0
+        durationInSec: 1
+
+      # L4 安全回源器配置
+      l4Config:
+        redisKeyPrefix: "hotarmor:user:"
+        redisTtlSeconds: 300
+        lockWaitTimeMs: 3000
+        lockLeaseTimeMs: 5000
+
+      # 一致性配置
+      consistencyConfig:
+        enableDelayedDoubleDelete: true
+        delayTimeMs: 5000
+        enableBroadcast: true
+        broadcastChannel: "hotarmor:invalidate"
+
+    # 示例规则：商品详情
+    - resource: product:detail
+      l1Config:
+        enabled: true
+        maximumSize: 5000
+        expireAfterWrite: 120
+        timeUnit: SECONDS
+
+      l2Config:
+        enabled: true
+        windowSeconds: 10
+        threshold: 3
+
+      l3Config:
+        enabled: true
+        qpsThreshold: 200.0
+        durationInSec: 1
+
+      l4Config:
+        redisKeyPrefix: "hotarmor:product:"
+        redisTtlSeconds: 600
+        lockWaitTimeMs: 3000
+        lockLeaseTimeMs: 5000
+
+      consistencyConfig:
+        enableDelayedDoubleDelete: true
+        delayTimeMs: 5000
+        enableBroadcast: true
+        broadcastChannel: "hotarmor:invalidate"
