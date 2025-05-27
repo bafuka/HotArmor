@@ -1,0 +1,129 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: hotarmor-example
+
+  # H2 数据库配置（内存模式，快速演示）
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:hotarmor;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    username: sa
+    password:
+
+  # Redis 配置
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    # 如果 Redis 没有密码，不要配置 password 字段
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# MyBatis Plus 配置
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+
+# Redisson 配置
+redisson:
+  config: |
+    singleServerConfig:
+      address: "redis://127.0.0.1:6379"
+
+# RocketMQ 配置（可选，如果不启动 RocketMQ 可以注释掉）
+#rocketmq:
+#  name-server: localhost:9876
+#  producer:
+#    group: hotarmor-example-producer
+
+# HotArmor 配置
+hotarmor:
+  enabled: true
+  delayed-delete-topic: hotarmor-delayed-delete
+  broadcast-channel: hotarmor:invalidate
+
+  rules:
+    # 用户详情缓存规则
+    - resource: user:detail
+      l1Config:
+        enabled: true
+        maximumSize: 10000
+        expireAfterWrite: 60
+        timeUnit: SECONDS
+      l2Config:
+        enabled: true
+        windowSeconds: 10
+        threshold: 3
+      l3Config:
+        enabled: true
+        qpsThreshold: 1.0  # 降低阈值方便测试（1秒内访问1次就触发）
+        durationInSec: 1
+      l4Config:
+        redisKeyPrefix: "hotarmor:user:"
+        redisTtlSeconds: 300
+        lockWaitTimeMs: 3000
+        lockLeaseTimeMs: 5000
+      consistencyConfig:
+        enableDelayedDoubleDelete: false  # 示例中暂不启用（需要 RocketMQ）
+        delayTimeMs: 5000
+        enableBroadcast: true
+        broadcastChannel: "hotarmor:invalidate"
+
+    # 用户名查询缓存规则
+    - resource: user:byUsername
+      l1Config:
+        enabled: true
+        maximumSize: 5000
+        expireAfterWrite: 60
+        timeUnit: SECONDS
+      l2Config:
+        enabled: true
+        windowSeconds: 10
+        threshold: 3
+      l3Config:
+        enabled: true
+        qpsThreshold: 3.0  # 降低阈值方便测试
+        durationInSec: 1
+      l4Config:
+        redisKeyPrefix: "hotarmor:user:username:"
+        redisTtlSeconds: 300
+      consistencyConfig:
+        enableDelayedDoubleDelete: false
+        enableBroadcast: true
+
+    # 商品详情缓存规则（热点商品防护）
+    - resource: product:detail
+      l1Config:
+        enabled: true
+        maximumSize: 20000
+        expireAfterWrite: 120
+        timeUnit: SECONDS
+      l2Config:
+        enabled: true
+        windowSeconds: 10
+        threshold: 5
+      l3Config:
+        enabled: true
+        qpsThreshold: 10.0  # 降低阈值方便测试（1秒内访问10次触发）
+        durationInSec: 1
+      l4Config:
+        redisKeyPrefix: "hotarmor:product:"
+        redisTtlSeconds: 600
+        lockWaitTimeMs: 3000
+        lockLeaseTimeMs: 5000
+      consistencyConfig:
+        enableDelayedDoubleDelete: false
+        enableBroadcast: true
+
+logging:
+  level:
+    cn.bafuka.hotarmor: DEBUG
+    cn.bafuka.hotarmor.example: INFO
