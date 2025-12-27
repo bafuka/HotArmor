@@ -827,7 +827,3 @@ mvn spring-boot:run
 - Run `mvn clean install` before commit
 
 ---
-
-## ⭐ Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=bafuka/HotArmor&type=Date)](https://star-history.com/#bafuka/HotArmor&Date)
