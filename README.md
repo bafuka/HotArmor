@@ -1,3 +1,5 @@
+
+
 <div align="center">
 
 [English](README.md) | [简体中文](README-ZH.md)
@@ -746,7 +748,10 @@ Used for update/delete methods to automatically invalidate cache:
 ```java
 @HotArmorEvict(
     resource = "user:detail",      // Resource name (required)
-    key = "#user.id"               // Cache key expression (supports SpEL)
+    key = "#user.id",              // Cache key expression (supports SpEL)
+    beforeInvocation = false,      // Delete cache before method execution (default: false)
+    delayedDelete = false,         // Enable delayed double-delete (default: false)
+    broadcast = true               // Send invalidation broadcast (default: true)
 )
 public void updateUser(User user) {
     userMapper.updateById(user);
